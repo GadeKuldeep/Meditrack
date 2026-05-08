@@ -31,14 +31,28 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 
-const clientUrl = process.env.CLIENT_URL || (process.env.NODE_ENV === 'production'
-  ? 'https://meditrack-e.netlify.app'
-  : 'http://localhost:5173');
+const clientUrl = process.env.CLIENT_URL || 'https://meditrack-e.netlify.app';
+const allowedOrigins = [
+  clientUrl,
+  'https://meditrack-e.netlify.app',
+  'http://localhost:5173',
+].filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error(`CORS policy: Origin ${origin} not allowed`));
+  },
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
 
 // Socket.io initialization
 const io = new Server(server, {
   cors: {
-    origin: clientUrl,
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   },
@@ -51,10 +65,8 @@ app.use(compression());
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
-app.use(cors({
-  origin: clientUrl,
-  credentials: true,
-}));
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
