@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import bcrypt from 'bcryptjs';
 import { generateToken, generateRefreshToken } from '../middleware/authMiddleware.js';
 
 // @desc    Register a new user
@@ -8,6 +9,11 @@ export const registerUser = async (req, res, next) => {
   try {
     const { name, email, password, role } = req.body;
 
+    if (!name || !email || !password) {
+      res.status(400);
+      throw new Error('Please provide name, email, and password');
+    }
+
     const userExists = await User.findOne({ email });
 
     if (userExists) {
@@ -15,9 +21,8 @@ export const registerUser = async (req, res, next) => {
       throw new Error('User already exists');
     }
 
-    const bcrypt = await import('bcryptjs');
-    const salt = await bcrypt.default.genSalt(10);
-    const passwordHash = await bcrypt.default.hash(password, salt);
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
 
     const user = await User.create({
       name,

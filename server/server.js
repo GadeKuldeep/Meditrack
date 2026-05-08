@@ -26,6 +26,23 @@ import { initCronJobs } from './services/cronService.js';
 import { initSocket } from './services/socketService.js';
 
 dotenv.config();
+
+// ─── Prevent silent crashes ──────────────────────────────────────
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION:', err.message, err.stack);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('UNHANDLED REJECTION:', reason);
+});
+
+// ─── Validate critical env vars ──────────────────────────────────
+const requiredEnv = ['MONGO_URI', 'JWT_SECRET', 'JWT_REFRESH_SECRET'];
+requiredEnv.forEach((key) => {
+  if (!process.env[key]) {
+    console.error(`⚠️  WARNING: Missing env var ${key}`);
+  }
+});
+
 connectDB();
 
 const app = express();
@@ -81,6 +98,15 @@ app.use('/uploads', express.static('uploads'));
 
 // ─── Health / Wake-up endpoint ────────────────────────────────────
 app.get('/api/ping', (_req, res) => res.json({ status: 'ok' }));
+
+// ─── Debug endpoint (TEMPORARY — remove after debugging) ─────────
+app.get('/api/debug-env', (_req, res) => res.json({
+  NODE_ENV: process.env.NODE_ENV || 'NOT SET',
+  MONGO_URI: process.env.MONGO_URI ? 'SET ✓' : 'MISSING ✗',
+  JWT_SECRET: process.env.JWT_SECRET ? 'SET ✓' : 'MISSING ✗',
+  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET ? 'SET ✓' : 'MISSING ✗',
+  CLIENT_URL: process.env.CLIENT_URL || 'NOT SET',
+}));
 
 // Rate limiting for auth
 const limiter = rateLimit({
