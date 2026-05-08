@@ -23,3 +23,17 @@ services:
         value: production
       - key: CLIENT_URL
         value: https://meditrack-e.netlify.app
+      - key: MONGO_URI
+        value: mongodb+srv://universet560_db_user:uUe7tiCDlZFUjx7P@cluster0.rlwoqiw.mongodb.net/
+      - key: JWT_SECRET
+        value: supersecretjwtkey
+      - key: JWT_REFRESH_SECRET
+        value: supersecretrefreshkey
+      - key: EMAIL_HOST
+        value: smtp.ethereal.email
+      - key: EMAIL_PORT
+        value: 587
+      - key: EMAIL_USER
+        value: your_email_user
+      - key: EMAIL_PASS
+        value: your_email_pass
