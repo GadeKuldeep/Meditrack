@@ -9,50 +9,27 @@ export const registerUser = async (req, res, next) => {
   try {
     const { name, email, password, role } = req.body;
 
-    if (!name || !email || !password) {
-      res.status(400);
-      throw new Error('Please provide name, email, and password');
-    }
+    if (!name || !email || !password)
+      return res.status(400).json({ message: 'Please provide name, email, and password' });
 
-    const userExists = await User.findOne({ email });
+    if (await User.findOne({ email }))
+      return res.status(400).json({ message: 'User already exists' });
 
-    if (userExists) {
-      res.status(400);
-      throw new Error('User already exists');
-    }
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await User.create({ name, email, passwordHash, role });
 
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
+    const token = generateToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
 
-    const user = await User.create({
-      name,
-      email,
-      passwordHash,
-      role,
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    if (user) {
-      const token = generateToken(user._id);
-      const refreshToken = generateRefreshToken(user._id);
+    res.status(201).json({ _id: user._id, name: user.name, email: user.email, role: user.role, token });
 
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: true,                          // always true for cross-origin
-        sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-
-      res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        token,
-      });
-    } else {
-      res.status(400);
-      throw new Error('Invalid user data');
-    }
   } catch (error) {
     next(error);
   }

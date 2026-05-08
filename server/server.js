@@ -108,36 +108,6 @@ app.get('/api/debug-env', (_req, res) => res.json({
   CLIENT_URL: process.env.CLIENT_URL || 'NOT SET',
 }));
 
-// ─── Debug test endpoint (TEMPORARY) ─────────────────────────────
-app.post('/api/debug-test', async (req, res) => {
-  const results = { body: req.body };
-  try {
-    // Test 1: bcrypt
-    const bcrypt = await import('bcryptjs');
-    const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash('test123', salt);
-    results.bcrypt = 'OK: ' + hash.substring(0, 10) + '...';
-  } catch (e) {
-    results.bcrypt = 'FAILED: ' + e.message;
-  }
-  try {
-    // Test 2: jwt
-    const jwt = await import('jsonwebtoken');
-    const token = jwt.default.sign({ id: 'test' }, process.env.JWT_SECRET, { expiresIn: '1m' });
-    results.jwt = 'OK: ' + token.substring(0, 20) + '...';
-  } catch (e) {
-    results.jwt = 'FAILED: ' + e.message;
-  }
-  try {
-    // Test 3: mongoose
-    const mongoose = await import('mongoose');
-    results.mongoose = 'Connected: ' + (mongoose.default.connection.readyState === 1 ? 'YES' : 'NO (state=' + mongoose.default.connection.readyState + ')');
-  } catch (e) {
-    results.mongoose = 'FAILED: ' + e.message;
-  }
-  res.json(results);
-});
-
 // Rate limiting for auth
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
