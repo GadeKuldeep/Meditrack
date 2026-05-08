@@ -38,14 +38,25 @@ const allowedOrigins = [
   'http://localhost:5173',
 ].filter(Boolean);
 
-// ─── CORS Configuration ──────────────────────────────────────────
-app.use(cors({
-  origin: true, // Reflect request origin back to allow any (safest for cross-domain debugging)
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  optionsSuccessStatus: 200
-}));
+// ─── Brute Force CORS Configuration ─────────────────────────────
+// This manual middleware ensures headers are set for every single request
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  // Allow your specific frontend or any netlify.app origin
+  if (origin && (origin.includes('netlify.app') || origin.includes('localhost'))) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+  next();
+});
 
 // Socket.io initialization
 const io = new Server(server, {
