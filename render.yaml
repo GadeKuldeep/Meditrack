@@ -1,0 +1,25 @@
+services:
+  - type: static
+    name: meditrack-client
+    env: static
+    branch: main
+    buildCommand: npm install && npm run build
+    staticPublishPath: client/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://meditrack-x4v3.onrender.com/api
+      - key: NODE_ENV
+        value: production
+
+  - type: web
+    name: meditrack-server
+    env: node
+    branch: main
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_URL
+        value: https://meditrack-e.netlify.app

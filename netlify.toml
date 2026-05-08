@@ -1,0 +1,9 @@
+[build]
+  base = "client"
+  publish = "dist"
+  command = "npm install && npm run build"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NODE_ENV = "production"
+  VITE_API_URL = "https://meditrack-x4v3.onrender.com/api"

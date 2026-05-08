@@ -31,10 +31,14 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 
+const clientUrl = process.env.CLIENT_URL || (process.env.NODE_ENV === 'production'
+  ? 'https://meditrack-e.netlify.app'
+  : 'http://localhost:5173');
+
 // Socket.io initialization
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: clientUrl,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   },
@@ -48,7 +52,7 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: clientUrl,
   credentials: true,
 }));
 app.use(express.json());
