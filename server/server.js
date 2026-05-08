@@ -39,29 +39,19 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 // ─── CORS Configuration ──────────────────────────────────────────
-// Using 'origin: true' to reflect the request origin if it matches our list
-// or simply allow it during this debugging phase.
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('netlify.app')) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: true, // Reflect request origin back to allow any (safest for cross-domain debugging)
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
   optionsSuccessStatus: 200
 }));
 
-
-
 // Socket.io initialization
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    origin: true,
+    methods: ['GET', 'POST'],
     credentials: true,
   },
 });
@@ -81,14 +71,13 @@ app.use(cookieParser());
 app.use('/uploads', express.static('uploads'));
 
 // ─── Health / Wake-up endpoint ────────────────────────────────────
-// Render free tier spins down after inactivity. The frontend can ping
-// this lightweight endpoint first to wake the server before real requests.
 app.get('/api/ping', (_req, res) => res.json({ status: 'ok' }));
 
 // Rate limiting for auth
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
+  skip: (req) => req.method === 'OPTIONS', // Don't rate limit preflight
 });
 app.use('/api/auth', limiter);
 
