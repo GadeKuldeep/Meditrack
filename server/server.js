@@ -31,7 +31,6 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 
-const clientUrl = process.env.CLIENT_URL || 'https://meditrack-e.netlify.app';
 const allowedOrigins = [
   process.env.CLIENT_URL,
   'https://meditrack-e.netlify.app',
@@ -39,34 +38,25 @@ const allowedOrigins = [
   'http://localhost:5173',
 ].filter(Boolean);
 
-// Manual CORS middleware fallback to ensure headers are ALWAYS set
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else if (!origin && process.env.NODE_ENV === 'development') {
-    // Allow server-to-server or Postman in dev
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-  
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  next();
-});
-
-const corsOptions = {
-  origin: allowedOrigins,
+// ─── CORS Configuration ──────────────────────────────────────────
+// Using 'origin: true' to reflect the request origin if it matches our list
+// or simply allow it during this debugging phase.
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('netlify.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  optionsSuccessStatus: 200,
-};
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  optionsSuccessStatus: 200
+}));
 
-// ─── Standard CORS middleware ───
-app.use(cors(corsOptions));
+// Explicitly handle OPTIONS preflight for all routes
+app.options('*', cors());
 
 // Socket.io initialization
 const io = new Server(server, {
