@@ -1,0 +1,16 @@
+{
+  "name": "meditrack-monorepo",
+  "version": "1.0.0",
+  "description": "MediTrack - Digital Medication Tracking System",
+  "scripts": {
+    "start": "npm run start --prefix server",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client",
+    "seed": "npm run seed --prefix server"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
