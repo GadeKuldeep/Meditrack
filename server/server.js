@@ -40,14 +40,24 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. Postman, server-to-server)
     if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
     callback(new Error(`CORS policy: Origin ${origin} not allowed`));
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 200,
 };
+
+// ─── CORS must be applied BEFORE helmet and all other middleware ───
+// This ensures CORS headers are set even when helmet rewrites security headers.
+app.use(cors(corsOptions));
+
+// Handle preflight OPTIONS requests explicitly for all routes
+app.options('*', cors(corsOptions));
 
 // Socket.io initialization
 const io = new Server(server, {
@@ -60,16 +70,22 @@ const io = new Server(server, {
 initSocket(io);
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 app.use(compression());
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
-app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use('/uploads', express.static('uploads'));
+
+// ─── Health / Wake-up endpoint ────────────────────────────────────
+// Render free tier spins down after inactivity. The frontend can ping
+// this lightweight endpoint first to wake the server before real requests.
+app.get('/api/ping', (_req, res) => res.json({ status: 'ok' }));
 
 // Rate limiting for auth
 const limiter = rateLimit({
