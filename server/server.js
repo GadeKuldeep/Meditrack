@@ -40,11 +40,14 @@ const allowedOrigins = [
 
 // ─── Brute Force CORS Configuration ─────────────────────────────
 app.use((req, res, next) => {
-  const origin = req.headers.origin || '*';
+  // Never use '*' with credentials. Fallback to specific frontend URL.
+  const origin = req.headers.origin || 'https://meditrack-e.netlify.app';
+  
   res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.setHeader('Access-Control-Max-Age', '600'); // Cache preflight for 10 mins
   
   // Handle preflight
   if (req.method === 'OPTIONS') {
