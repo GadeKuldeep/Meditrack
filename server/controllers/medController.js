@@ -54,16 +54,16 @@ export const updateMedication = async (req, res, next) => {
         throw new Error('Not authorized to edit this medication');
       }
 
-      medication.name = name || medication.name;
-      medication.dosage = dosage || medication.dosage;
-      medication.unit = unit || medication.unit;
-      medication.frequency = frequency || medication.frequency;
-      medication.schedule = schedule || medication.schedule;
-      medication.startDate = startDate || medication.startDate;
-      medication.endDate = endDate || medication.endDate;
-      medication.category = category || medication.category;
+      medication.name = name !== undefined ? name : medication.name;
+      medication.dosage = dosage !== undefined ? dosage : medication.dosage;
+      medication.unit = unit !== undefined ? unit : medication.unit;
+      medication.frequency = frequency !== undefined ? frequency : medication.frequency;
+      medication.schedule = schedule !== undefined ? schedule : medication.schedule;
+      medication.startDate = startDate !== undefined ? startDate : medication.startDate;
+      medication.endDate = endDate !== undefined ? endDate : medication.endDate;
+      medication.category = category !== undefined ? category : medication.category;
       medication.isActive = isActive !== undefined ? isActive : medication.isActive;
-      medication.notes = notes || medication.notes;
+      medication.notes = notes !== undefined ? notes : medication.notes;
 
       const updatedMedication = await medication.save();
       res.json(updatedMedication);

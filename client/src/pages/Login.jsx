@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, ArrowRight, ShieldAlert, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState('');
@@ -27,11 +28,11 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 relative overflow-hidden">
-      {/* Decorative Background Elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-500/10 blur-[120px] pointer-events-none"></div>
+      {/* Decorative Background */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-500/10 blur-[120px] pointer-events-none" />
 
-      {/* Left side - Form */}
+      {/* Form Side */}
       <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24 z-10">
         <div className="mx-auto w-full max-w-sm lg:w-96 animate-slide-up">
           <div className="flex items-center gap-2 mb-8">
@@ -40,28 +41,29 @@ const Login = () => {
             </div>
             <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">MediTrack</h2>
           </div>
-          
+
           <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Welcome back</h3>
           <p className="text-slate-500 dark:text-slate-400 mb-8">Enter your details to access your dashboard.</p>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
             {error && (
               <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-xl text-sm flex items-start gap-2 animate-fade-in border border-red-100 dark:border-red-900/30">
-                <ShieldCheck className="w-5 h-5 flex-shrink-0" />
+                <ShieldAlert className="w-5 h-5 flex-shrink-0 mt-0.5" />
                 <span>{error}</span>
               </div>
             )}
-            
+
+            {/* Email */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-slate-400" />
-                </div>
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" />
                 <input
+                  id="login-email"
                   type="email"
                   required
-                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl leading-5 bg-white dark:bg-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all dark:text-white shadow-sm"
+                  autoComplete="email"
+                  className="block w-full pl-10 pr-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all dark:text-white shadow-sm"
                   placeholder="john@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -69,23 +71,34 @@ const Login = () => {
               </div>
             </div>
 
+            {/* Password */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-slate-400" />
-                </div>
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" />
                 <input
-                  type="password"
+                  id="login-password"
+                  type={showPassword ? 'text' : 'password'}
                   required
-                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl leading-5 bg-white dark:bg-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all dark:text-white shadow-sm"
+                  autoComplete="current-password"
+                  className="block w-full pl-10 pr-10 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all dark:text-white shadow-sm"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
               <div className="flex justify-end mt-2">
-                <a href="#" className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">Forgot password?</a>
+                <span className="text-sm font-medium text-blue-600 dark:text-blue-400 cursor-not-allowed opacity-60">
+                  Forgot password?
+                </span>
               </div>
             </div>
 
@@ -95,7 +108,7 @@ const Login = () => {
               className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>Sign in <ArrowRight className="w-4 h-4" /></>
               )}
@@ -111,7 +124,7 @@ const Login = () => {
         </div>
       </div>
 
-      {/* Right side - Image/Banner */}
+      {/* Right Banner */}
       <div className="hidden lg:block relative w-0 flex-1 bg-slate-900">
         <img
           className="absolute inset-0 h-full w-full object-cover opacity-60"
@@ -122,7 +135,8 @@ const Login = () => {
           <div className="max-w-xl animate-slide-up" style={{ animationDelay: '0.2s' }}>
             <h2 className="text-3xl font-bold text-white mb-4">Never miss a dose again.</h2>
             <p className="text-lg text-slate-300">
-              MediTrack helps patients and caregivers manage complex medication schedules with real-time tracking, intelligent reminders, and adherence analytics.
+              MediTrack helps patients and caregivers manage complex medication schedules with real-time
+              tracking, intelligent reminders, and adherence analytics.
             </p>
           </div>
         </div>

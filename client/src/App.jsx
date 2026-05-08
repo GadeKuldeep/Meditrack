@@ -9,60 +9,67 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Medications = lazy(() => import('./pages/Medications'));
+const Schedule = lazy(() => import('./pages/Schedule'));
+const Settings = lazy(() => import('./pages/Settings'));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    },
+  },
+});
+
+const Spinner = () => (
+  <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+    <div className="flex flex-col items-center gap-4">
+      <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+      <p className="text-sm text-slate-500 dark:text-slate-400 animate-pulse">Loading MediTrack…</p>
+    </div>
+  </div>
+);
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-        <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-  return user ? children : <Navigate to="/login" />;
+  if (loading) return <Spinner />;
+  return user ? children : <Navigate to="/login" replace />;
 };
 
-// Dummy pages for unmatched routes in layout
-const DummyPage = ({ title }) => (
-  <div className="flex items-center justify-center h-full">
-    <h2 className="text-2xl font-bold text-slate-500">{title} - Coming Soon</h2>
-  </div>
-);
+const PublicRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <Spinner />;
+  return user ? <Navigate to="/" replace /> : children;
+};
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Router>
-          <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-              <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-            </div>
-          }>
+          <Suspense fallback={<Spinner />}>
             <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              
+              {/* Public routes – redirect to dashboard if already logged in */}
+              <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+              <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+
               {/* Protected Layout Routes */}
-              <Route 
-                path="/" 
+              <Route
+                path="/"
                 element={
                   <ProtectedRoute>
                     <Layout />
                   </ProtectedRoute>
-                } 
+                }
               >
                 <Route index element={<Dashboard />} />
                 <Route path="medications" element={<Medications />} />
-                <Route path="schedule" element={<DummyPage title="Schedule" />} />
-                <Route path="patients" element={<DummyPage title="Patients" />} />
-                <Route path="settings" element={<DummyPage title="Settings" />} />
+                <Route path="schedule" element={<Schedule />} />
+                <Route path="settings" element={<Settings />} />
               </Route>
 
               {/* Catch all */}
-              <Route path="*" element={<Navigate to="/" />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>
         </Router>
