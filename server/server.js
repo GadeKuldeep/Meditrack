@@ -33,31 +33,40 @@ const server = http.createServer(app);
 
 const clientUrl = process.env.CLIENT_URL || 'https://meditrack-e.netlify.app';
 const allowedOrigins = [
-  clientUrl,
+  process.env.CLIENT_URL,
   'https://meditrack-e.netlify.app',
+  'https://meditrack-e.netlify.app/',
   'http://localhost:5173',
 ].filter(Boolean);
+
+// Manual CORS middleware fallback to ensure headers are ALWAYS set
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (!origin && process.env.NODE_ENV === 'development') {
+    // Allow server-to-server or Postman in dev
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
 
 const corsOptions = {
   origin: allowedOrigins,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With', 
-    'Accept',
-    'Origin',
-  ],
   optionsSuccessStatus: 200,
 };
 
-// ─── CORS must be applied BEFORE helmet and all other middleware ───
-// This ensures CORS headers are set even when helmet rewrites security headers.
+// ─── Standard CORS middleware ───
 app.use(cors(corsOptions));
-
-// Handle preflight OPTIONS requests explicitly for all routes
-app.options('*', cors(corsOptions));
 
 // Socket.io initialization
 const io = new Server(server, {
