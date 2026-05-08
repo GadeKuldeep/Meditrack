@@ -49,25 +49,46 @@ const app = express();
 const server = http.createServer(app);
 
 const allowedOrigins = [
-  process.env.CLIENT_URL,
+  process.env.CLIENT_URL || 'https://meditrack-e.netlify.app',
   'https://meditrack-e.netlify.app',
-  'https://meditrack-e.netlify.app/',
   'http://localhost:5173',
-].filter(Boolean);
+];
 
-// ─── Brute Force CORS Configuration ─────────────────────────────
+// ─── Enhanced CORS Configuration ─────────────────────────────────
+// Apply CORS BEFORE any other middleware
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g., mobile apps, curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowlist
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      // For wakeServer and public ping, still allow
+      console.warn(`CORS Request from unauthorized origin: ${origin}`);
+      callback(null, true); // Allow anyway for resilience
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  maxAge: 600, // Cache preflight for 10 mins
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+
+// Additional manual CORS headers for extra resilience
 app.use((req, res, next) => {
-  // Never use '*' with credentials. Fallback to specific frontend URL.
-  const origin = req.headers.origin || 'https://meditrack-e.netlify.app';
-  
-  res.setHeader('Access-Control-Allow-Origin', origin);
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  res.setHeader('Access-Control-Max-Age', '600'); // Cache preflight for 10 mins
-  
-  // Handle preflight
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
   if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
     return res.status(200).end();
   }
   next();
@@ -86,6 +107,8 @@ initSocket(io);
 // Middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginOpenerPolicy: false,
+  crossOriginEmbedderPolicy: false,
 }));
 app.use(compression());
 if (process.env.NODE_ENV === 'development') {

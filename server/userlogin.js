@@ -13,14 +13,14 @@ const createTestUser = async () => {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('MongoDB Connected!');
 
-    const name = 'Test Patient';
-    const email = 'testpatient@example.com';
+    const name = 'Kunal Wagh';
+    const email = 'kunal@gmail.com';
     const password = 'password123';
     const role = 'Patient';
 
     // Check if user already exists
     const userExists = await User.findOne({ email });
-    
+
     if (userExists) {
       console.log(`User with email ${email} already exists. Deleting existing user to recreate...`);
       await User.deleteOne({ email });
